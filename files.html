@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Files – My Creative Space</title>
+  <link rel="stylesheet" href="resources/style.css" />
+  <style>
+    /* Drop zone */
+    #dropZone {
+      max-width: 700px;
+      margin: 28px auto 0;
+      padding: 0 30px;
+    }
+
+    .drop-target {
+      border: 3px dashed rgba(0,0,0,0.18);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.55);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .drop-target.over {
+      background: rgba(255,255,255,0.85);
+      border-color: #3a9efd;
+    }
+
+    .drop-target .drop-icon { font-size: 3rem; }
+    .drop-target p { margin: 8px 0 0; color: #666; font-size: 0.95rem; }
+    .drop-target .btn { margin-top: 16px; }
+
+    /* File list */
+    .file-list {
+      max-width: 700px;
+      margin: 10px auto;
+      padding: 0 30px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .file-row {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: left;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+    .file-row .file-icon { font-size: 2rem; }
+    .file-row .file-info { flex: 1; min-width: 0; }
+    .file-row .file-name {
+      font-weight: bold;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-row .file-meta { font-size: 0.78rem; color: #888; margin-top: 2px; }
+
+    .file-row .file-actions { display: flex; gap: 8px; }
+
+    .file-row button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-view { background: #e8f4fd; color: #2277cc; }
+    .btn-view:hover { background: #cce0f5; }
+    .btn-dl { background: #e8fde8; color: #227722; }
+    .btn-dl:hover { background: #cce5cc; }
+    .btn-del { background: #fde8e8; color: #cc2222; }
+    .btn-del:hover { background: #f5cccc; }
+
+    /* Preview modal */
+    #modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal.open { display: flex; }
+
+    #modal .modal-box {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 80vw;
+      max-height: 80vh;
+      overflow: auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    #modal .close-btn {
+      position: sticky;
+      top: 0;
+      float: right;
+      font-size: 1.4rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #modal img { max-width: 100%; border-radius: 10px; }
+    #modal pre { white-space: pre-wrap; font-size: 0.85rem; font-family: monospace; text-align: left; }
+
+    /* Stats bar */
+    .stats-bar {
+      max-width: 700px;
+      margin: 0 auto 4px;
+      padding: 0 30px;
+      display: flex;
+      gap: 20px;
+      justify-content: flex-start;
+    }
+
+    .stat-pill {
+      background: rgba(255,255,255,0.6);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.82rem;
+      color: #555;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">← Home</a>
+  <h1>📁 My Files</h1>
+  <p>Drop files here to keep them organised — images, text, HTML, and more</p>
+</header>
+
+<!-- Drop zone -->
+<div id="dropZone">
+  <label for="fileInput" class="drop-target" id="dropTarget">
+    <div class="drop-icon">📂</div>
+    <p>Drag &amp; drop files here, or click to choose</p>
+    <span class="btn" style="pointer-events:none;">Browse Files</span>
+    <input type="file" id="fileInput" multiple style="display:none;" />
+  </label>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar" id="statsBar" style="margin-top:16px;"></div>
+
+<!-- File list -->
+<p class="section-title">📋 Uploaded Files</p>
+<div class="file-list" id="fileList">
+  <p style="color:#888;font-size:0.9rem;padding:8px 0;">No files yet — drop something above to get started!</p>
+</div>
+
+<!-- Preview modal -->
+<div id="modal">
+  <div class="modal-box">
+    <button class="close-btn" id="closeModal">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<footer>Made with ❤️ for learning and creativity</footer>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const dropTarget = document.getElementById('dropTarget');
+  const fileList = document.getElementById('fileList');
+  const statsBar = document.getElementById('statsBar');
+  const modal = document.getElementById('modal');
+  const modalContent = document.getElementById('modalContent');
+
+  let files = []; // { name, size, type, dataUrl }
+
+  function fileIcon(type) {
+    if (type.startsWith('image/')) return '🖼️';
+    if (type === 'text/html') return '🌐';
+    if (type.startsWith('text/')) return '📄';
+    if (type === 'application/pdf') return '📕';
+    if (type.includes('zip') || type.includes('compressed')) return '🗜️';
+    return '📎';
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function renderStats() {
+    const total = files.reduce((s, f) => s + f.size, 0);
+    statsBar.innerHTML = `
+      <div class="stat-pill">📦 ${files.length} file${files.length !== 1 ? 's' : ''}</div>
+      <div class="stat-pill">💾 ${formatSize(total)} total</div>
+    `;
+  }
+
+  function renderFiles() {
+    renderStats();
+    if (files.length === 0) {
+      fileList.innerHTML = '<p style="color:#888;font-size:0.9rem;padding:8px 0;">No files yet — drop something above to get started!</p>';
+      return;
+    }
+    fileList.innerHTML = files.map((f, i) => `
+      <div class="file-row">
+        <div class="file-icon">${fileIcon(f.type)}</div>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${formatSize(f.size)} · ${f.type || 'unknown type'}</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-view" onclick="previewFile(${i})">View</button>
+          <button class="btn-dl" onclick="downloadFile(${i})">Save</button>
+          <button class="btn-del" onclick="deleteFile(${i})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function addFiles(fileObjs) {
+    Array.from(fileObjs).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        files.push({ name: file.name, size: file.size, type: file.type, dataUrl: e.target.result });
+        renderFiles();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function deleteFile(i) {
+    if (!confirm('Remove "' + files[i].name + '" from the list?')) return;
+    files.splice(i, 1);
+    renderFiles();
+  }
+
+  function downloadFile(i) {
+    const a = document.createElement('a');
+    a.href = files[i].dataUrl; a.download = files[i].name; a.click();
+  }
+
+  function previewFile(i) {
+    const f = files[i];
+    if (f.type.startsWith('image/')) {
+      modalContent.innerHTML = `<h3 style="margin:0 0 12px;text-align:left;">${f.name}</h3><img src="${f.dataUrl}" alt="${f.name}" />`;
+    } else if (f.type.startsWith('text/') || f.type === '') {
+      const text = atob(f.dataUrl.split(',')[1]);
+      modalContent.innerHTML = `<h3 style="margin:0 0 12px;text-align:left;">${f.name}</h3><pre>${text.replace(/</g,'&lt;')}</pre>`;
+    } else {
+      modalContent.innerHTML = `<p>Preview not available for this file type.<br><br><strong>${f.name}</strong></p>`;
+    }
+    modal.classList.add('open');
+  }
+
+  document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+  fileInput.addEventListener('change', () => addFiles(fileInput.files));
+
+  dropTarget.addEventListener('dragover', e => { e.preventDefault(); dropTarget.classList.add('over'); });
+  dropTarget.addEventListener('dragleave', () => dropTarget.classList.remove('over'));
+  dropTarget.addEventListener('drop', e => {
+    e.preventDefault();
+    dropTarget.classList.remove('over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  renderFiles();
+</script>
+
+</body>
+</html>

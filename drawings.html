@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Drawings – My Creative Space</title>
+  <link rel="stylesheet" href="resources/style.css" />
+  <style>
+    /* Gallery grid for images */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 30px;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .gallery-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-align: left;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background: #f0f0f0;
+    }
+
+    .gallery-card .img-placeholder {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(135deg, #e0f7ff, #fffde0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+
+    .gallery-card .card-body {
+      padding: 14px 16px;
+    }
+
+    .gallery-card .card-title {
+      font-weight: bold;
+      font-size: 1rem;
+      margin: 0 0 4px;
+    }
+
+    .gallery-card .card-date {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    /* Mini draw canvas */
+    .canvas-area {
+      max-width: 720px;
+      margin: 0 auto 10px;
+      padding: 0 30px;
+    }
+
+    canvas#drawCanvas {
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      cursor: crosshair;
+      background: white;
+      display: block;
+      width: 100%;
+      max-width: 660px;
+      height: 300px;
+      margin: auto;
+      touch-action: none;
+    }
+
+    .draw-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px auto;
+      max-width: 720px;
+      padding: 0 30px;
+    }
+
+    .draw-controls label {
+      font-size: 0.85rem;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .draw-controls input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .draw-controls input[type="range"] {
+      width: 80px;
+    }
+
+    .draw-controls button {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 20px;
+      background: #333;
+      color: white;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .draw-controls button:hover {
+      background: #555;
+    }
+
+    .draw-controls button.danger {
+      background: #e55;
+    }
+    .draw-controls button.danger:hover {
+      background: #c33;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">← Home</a>
+  <h1>🖍️ My Drawings</h1>
+  <p>Your artwork gallery — draw something new or upload saved images</p>
+</header>
+
+<!-- Quick draw pad -->
+<div class="canvas-area" style="margin-top:28px;">
+  <canvas id="drawCanvas" width="1320" height="600"></canvas>
+</div>
+
+<div class="draw-controls">
+  <label>
+    Color
+    <input type="color" id="colorPicker" value="#333333" />
+  </label>
+  <label>
+    Size
+    <input type="range" id="brushSize" min="2" max="30" value="6" />
+  </label>
+  <button id="eraserBtn">🧹 Eraser</button>
+  <button class="danger" id="clearBtn">🗑️ Clear</button>
+  <button id="saveBtn">💾 Save Drawing</button>
+</div>
+
+<!-- Gallery -->
+<p class="section-title">📂 Saved Drawings</p>
+
+<div class="gallery" id="gallery">
+  <!-- Sample placeholder cards -->
+  <div class="gallery-card">
+    <div class="img-placeholder">🌈</div>
+    <div class="card-body">
+      <div class="card-title">Rainbow Sky</div>
+      <div class="card-date">Example · Add your own!</div>
+    </div>
+  </div>
+
+  <div class="gallery-card">
+    <div class="img-placeholder">🐉</div>
+    <div class="card-body">
+      <div class="card-title">My Dragon</div>
+      <div class="card-date">Example · Add your own!</div>
+    </div>
+  </div>
+
+  <div class="gallery-card upload-zone" id="uploadZone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;">
+    <label for="imageUpload" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;">
+      <span style="font-size:2.5rem;">➕</span>
+      <span style="font-weight:bold;">Upload a Drawing</span>
+      <span style="font-size:0.8rem;color:#888;">PNG, JPG or GIF</span>
+    </label>
+    <input type="file" id="imageUpload" accept="image/*" multiple />
+  </div>
+</div>
+
+<footer>Made with ❤️ for learning and creativity</footer>
+
+<script>
+  // ── Drawing canvas ──
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  const colorPicker = document.getElementById('colorPicker');
+  const brushSize = document.getElementById('brushSize');
+  const eraserBtn = document.getElementById('eraserBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  let drawing = false;
+  let erasing = false;
+  let lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width;
+    const scaleY = canvas.height / r.height;
+    if (e.touches) {
+      return [(e.touches[0].clientX - r.left) * scaleX, (e.touches[0].clientY - r.top) * scaleY];
+    }
+    return [(e.clientX - r.left) * scaleX, (e.clientY - r.top) * scaleY];
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    [lastX, lastY] = getPos(e);
+  }
+
+  function draw(e) {
+    e.preventDefault();
+    if (!drawing) return;
+    const [x, y] = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = erasing ? '#ffffff' : colorPicker.value;
+    ctx.lineWidth = brushSize.value * (erasing ? 3 : 1);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    [lastX, lastY] = [x, y];
+  }
+
+  function endDraw() { drawing = false; }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', endDraw);
+
+  eraserBtn.addEventListener('click', () => {
+    erasing = !erasing;
+    eraserBtn.textContent = erasing ? '✏️ Draw' : '🧹 Eraser';
+    eraserBtn.style.background = erasing ? '#f0a500' : '#333';
+  });
+
+  clearBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  saveBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'my-drawing-' + Date.now() + '.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+
+  // ── Upload images to gallery ──
+  document.getElementById('imageUpload').addEventListener('change', function () {
+    const gallery = document.getElementById('gallery');
+    const uploadCard = document.getElementById('uploadZone');
+    Array.from(this.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        card.innerHTML = `
+          <img src="${e.target.result}" alt="${file.name}" />
+          <div class="card-body">
+            <div class="card-title">${file.name.replace(/\.[^.]+$/, '')}</div>
+            <div class="card-date">Just added</div>
+          </div>
+        `;
+        gallery.insertBefore(card, uploadCard);
+      };
+      reader.readAsDataURL(file);
+    });
+    this.value = '';
+  });
+</script>
+
+</body>
+</html>

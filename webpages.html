@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Web Pages – My Creative Space</title>
+  <link rel="stylesheet" href="resources/style.css" />
+  <style>
+    /* Code editor panel */
+    .editor-wrap {
+      max-width: 960px;
+      margin: 24px auto 0;
+      padding: 0 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .editor-wrap { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-label {
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #555;
+      text-align: left;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    textarea#codeInput {
+      width: 100%;
+      height: 280px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      padding: 14px;
+      border: 2px solid rgba(0,0,0,0.1);
+      border-radius: 14px;
+      resize: vertical;
+      background: rgba(255,255,255,0.85);
+      color: #222;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea#codeInput:focus {
+      border-color: #88ccff;
+    }
+
+    iframe#preview {
+      width: 100%;
+      height: 280px;
+      border: 2px solid rgba(0,0,0,0.1);
+      border-radius: 14px;
+      background: white;
+    }
+
+    .editor-actions {
+      max-width: 960px;
+      margin: 12px auto;
+      padding: 0 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .editor-actions button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 20px;
+      background: #333;
+      color: white;
+      font-size: 0.88rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .editor-actions button:hover { background: #555; }
+    .editor-actions button.accent { background: #3a9efd; }
+    .editor-actions button.accent:hover { background: #1e7fd4; }
+
+    /* Saved projects list */
+    .project-list {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 10px 30px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .project-row {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: left;
+      transition: box-shadow 0.2s;
+    }
+
+    .project-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+
+    .project-row .proj-icon { font-size: 1.8rem; }
+
+    .project-row .proj-info { flex: 1; }
+    .project-row .proj-name { font-weight: bold; font-size: 1rem; }
+    .project-row .proj-date { font-size: 0.78rem; color: #888; margin-top: 2px; }
+
+    .project-row .proj-actions { display: flex; gap: 8px; }
+
+    .project-row button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-open { background: #e8f4fd; color: #2277cc; }
+    .btn-open:hover { background: #cce0f5; }
+    .btn-del { background: #fde8e8; color: #cc2222; }
+    .btn-del:hover { background: #f5cccc; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">← Home</a>
+  <h1>💻 My Web Pages</h1>
+  <p>Write HTML, see it live — then save your projects</p>
+</header>
+
+<!-- Editor -->
+<div class="editor-wrap">
+  <div class="panel">
+    <div class="panel-label">✏️ HTML Code</div>
+    <textarea id="codeInput" spellcheck="false" placeholder="Type your HTML here…"><!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial; background: #fafafa; padding: 20px; }
+    h1 { color: #3a9efd; }
+  </style>
+</head>
+<body>
+  <h1>Hello, World! 🌍</h1>
+  <p>Edit this code and click <strong>Run</strong> to see the result.</p>
+</body>
+</html></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-label">👁️ Preview</div>
+    <iframe id="preview" title="Live preview" sandbox="allow-scripts"></iframe>
+  </div>
+</div>
+
+<div class="editor-actions">
+  <button class="accent" id="runBtn">▶ Run</button>
+  <button id="saveProjectBtn">💾 Save Project</button>
+  <button id="clearEditorBtn">🗑️ Clear</button>
+  <button id="downloadBtn">⬇️ Download .html</button>
+</div>
+
+<!-- Saved projects -->
+<p class="section-title">📂 Saved Projects</p>
+<div class="project-list" id="projectList">
+  <p style="color:#888;font-size:0.9rem;padding:10px 0;">
+    No saved projects yet — write something above and click <strong>Save Project</strong>!
+  </p>
+</div>
+
+<footer>Made with ❤️ for learning and creativity</footer>
+
+<script>
+  const codeInput = document.getElementById('codeInput');
+  const preview = document.getElementById('preview');
+  const projectList = document.getElementById('projectList');
+  let projects = JSON.parse(localStorage.getItem('webProjects') || '[]');
+
+  function runCode() {
+    const blob = new Blob([codeInput.value], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    preview.src = url;
+  }
+
+  function renderProjects() {
+    if (projects.length === 0) {
+      projectList.innerHTML = '<p style="color:#888;font-size:0.9rem;padding:10px 0;">No saved projects yet — write something above and click <strong>Save Project</strong>!</p>';
+      return;
+    }
+    projectList.innerHTML = projects.map((p, i) => `
+      <div class="project-row">
+        <div class="proj-icon">🗂️</div>
+        <div class="proj-info">
+          <div class="proj-name">${p.name}</div>
+          <div class="proj-date">${p.date}</div>
+        </div>
+        <div class="proj-actions">
+          <button class="btn-open" onclick="loadProject(${i})">Open</button>
+          <button class="btn-del" onclick="deleteProject(${i})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function saveProject() {
+    const name = prompt('Name this project:', 'My Page ' + (projects.length + 1));
+    if (!name) return;
+    projects.push({ name, code: codeInput.value, date: new Date().toLocaleDateString() });
+    localStorage.setItem('webProjects', JSON.stringify(projects));
+    renderProjects();
+  }
+
+  function loadProject(i) {
+    codeInput.value = projects[i].code;
+    runCode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteProject(i) {
+    if (!confirm('Delete "' + projects[i].name + '"?')) return;
+    projects.splice(i, 1);
+    localStorage.setItem('webProjects', JSON.stringify(projects));
+    renderProjects();
+  }
+
+  document.getElementById('runBtn').addEventListener('click', runCode);
+  document.getElementById('saveProjectBtn').addEventListener('click', saveProject);
+  document.getElementById('clearEditorBtn').addEventListener('click', () => { codeInput.value = ''; });
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const blob = new Blob([codeInput.value], { type: 'text/html' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'mypage.html'; a.click();
+  });
+
+  codeInput.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = codeInput.selectionStart;
+      codeInput.value = codeInput.value.substring(0, s) + '  ' + codeInput.value.substring(codeInput.selectionEnd);
+      codeInput.selectionStart = codeInput.selectionEnd = s + 2;
+    }
+  });
+
+  // Auto-run on load
+  runCode();
+  renderProjects();
+</script>
+
+</body>
+</html>

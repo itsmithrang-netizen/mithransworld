@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Try-Out Lab – My Creative Space</title>
+  <link rel="stylesheet" href="resources/style.css" />
+  <style>
+    /* Experiment tabs */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px 30px 0;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .tab-btn {
+      padding: 9px 20px;
+      border: 2px solid rgba(0,0,0,0.12);
+      border-radius: 30px;
+      background: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #444;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: white;
+      border-color: #3a9efd;
+      color: #1a70c8;
+    }
+
+    /* Experiment panels */
+    .experiment { display: none; max-width: 800px; margin: 20px auto; padding: 0 30px 40px; }
+    .experiment.active { display: block; }
+
+    .exp-title { font-size: 1.3rem; font-weight: bold; color: #333; margin-bottom: 6px; text-align: left; }
+    .exp-desc  { font-size: 0.9rem; color: #666; margin-bottom: 18px; text-align: left; }
+
+    /* ── Colour Mixer ── */
+    .color-mixer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .color-mixer-grid label { font-size: 0.85rem; font-weight: bold; color: #555; }
+    .color-mixer-grid input[type=range] { width: 100%; }
+
+    #colorResult {
+      width: 100%;
+      height: 100px;
+      border-radius: 16px;
+      border: 3px solid rgba(0,0,0,0.1);
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1rem;
+      color: white;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    /* ── Rhythm Machine ── */
+    .drum-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(8, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .drum-label {
+      display: flex;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #555;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+
+    .drum-cell {
+      height: 38px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.6);
+      border: 2px solid rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .drum-cell.on { background: #3a9efd; border-color: #1a70c8; }
+    .drum-cell.active-beat { outline: 3px solid #f0a500; }
+
+    .drum-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .drum-controls button {
+      padding: 9px 22px; border: none; border-radius: 20px;
+      background: #333; color: white; font-weight: bold; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .drum-controls button:hover { background: #555; }
+    .drum-controls label { font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Gravity Balls ── */
+    canvas#physicsCanvas {
+      width: 100%;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.7);
+      border: 2px solid rgba(0,0,0,0.1);
+      cursor: crosshair;
+      display: block;
+      touch-action: none;
+    }
+
+    .physics-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+    .physics-controls button {
+      padding: 8px 20px; border: none; border-radius: 20px;
+      background: #333; color: white; font-size: 0.88rem; font-weight: bold; cursor: pointer; transition: background 0.2s;
+    }
+    .physics-controls button:hover { background: #555; }
+    .physics-controls label { font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Word Generator ── */
+    .word-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .word-controls select, .word-controls input {
+      padding: 8px 14px; border: 2px solid rgba(0,0,0,0.12); border-radius: 20px;
+      font-size: 0.9rem; background: rgba(255,255,255,0.8); outline: none;
+    }
+    .word-controls button {
+      padding: 9px 22px; border: none; border-radius: 20px;
+      background: #333; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s;
+    }
+    .word-controls button:hover { background: #555; }
+
+    .word-output {
+      background: rgba(255,255,255,0.8);
+      border-radius: 16px;
+      padding: 20px;
+      font-size: 1rem;
+      line-height: 1.7;
+      text-align: left;
+      min-height: 80px;
+      border: 2px solid rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">← Home</a>
+  <h1>🧪 Try-Out Lab</h1>
+  <p>Mini experiments to play with colour, sound, physics, and words</p>
+</header>
+
+<!-- Tab nav -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="colors">🎨 Colour Mixer</button>
+  <button class="tab-btn" data-tab="drums">🥁 Rhythm Machine</button>
+  <button class="tab-btn" data-tab="physics">⚽ Gravity Balls</button>
+  <button class="tab-btn" data-tab="words">📝 Word Generator</button>
+</div>
+
+<!-- ══ COLOUR MIXER ══ -->
+<div class="experiment active" id="tab-colors">
+  <div class="exp-title">🎨 Colour Mixer</div>
+  <div class="exp-desc">Drag the sliders to blend red, green, and blue and see what colour you make!</div>
+  <div class="color-mixer-grid">
+    <div>
+      <label>🔴 Red</label>
+      <input type="range" id="rSlider" min="0" max="255" value="100" />
+      <div id="rVal">100</div>
+    </div>
+    <div>
+      <label>🟢 Green</label>
+      <input type="range" id="gSlider" min="0" max="255" value="149" />
+      <div id="gVal">149</div>
+    </div>
+    <div>
+      <label>🔵 Blue</label>
+      <input type="range" id="bSlider" min="0" max="255" value="237" />
+      <div id="bVal">237</div>
+    </div>
+  </div>
+  <div id="colorResult"></div>
+</div>
+
+<!-- ══ RHYTHM MACHINE ══ -->
+<div class="experiment" id="tab-drums">
+  <div class="exp-title">🥁 Rhythm Machine</div>
+  <div class="exp-desc">Click cells to turn beats on, then hit Play to hear your rhythm!</div>
+
+  <div class="drum-grid" id="drumGrid">
+    <div class="drum-label">Kick</div>
+    <div class="drum-cell" data-row="0" data-col="0"></div>
+    <div class="drum-cell" data-row="0" data-col="1"></div>
+    <div class="drum-cell" data-row="0" data-col="2"></div>
+    <div class="drum-cell" data-row="0" data-col="3"></div>
+    <div class="drum-cell" data-row="0" data-col="4"></div>
+    <div class="drum-cell" data-row="0" data-col="5"></div>
+    <div class="drum-cell" data-row="0" data-col="6"></div>
+    <div class="drum-cell" data-row="0" data-col="7"></div>
+
+    <div class="drum-label">Snare</div>
+    <div class="drum-cell" data-row="1" data-col="0"></div>
+    <div class="drum-cell" data-row="1" data-col="1"></div>
+    <div class="drum-cell" data-row="1" data-col="2"></div>
+    <div class="drum-cell" data-row="1" data-col="3"></div>
+    <div class="drum-cell" data-row="1" data-col="4"></div>
+    <div class="drum-cell" data-row="1" data-col="5"></div>
+    <div class="drum-cell" data-row="1" data-col="6"></div>
+    <div class="drum-cell" data-row="1" data-col="7"></div>
+
+    <div class="drum-label">Hi-Hat</div>
+    <div class="drum-cell" data-row="2" data-col="0"></div>
+    <div class="drum-cell" data-row="2" data-col="1"></div>
+    <div class="drum-cell" data-row="2" data-col="2"></div>
+    <div class="drum-cell" data-row="2" data-col="3"></div>
+    <div class="drum-cell" data-row="2" data-col="4"></div>
+    <div class="drum-cell" data-row="2" data-col="5"></div>
+    <div class="drum-cell" data-row="2" data-col="6"></div>
+    <div class="drum-cell" data-row="2" data-col="7"></div>
+  </div>
+
+  <div class="drum-controls">
+    <button id="drumPlay">▶ Play</button>
+    <button id="drumClear">🗑️ Clear</button>
+    <label>
+      BPM
+      <input type="range" id="bpmSlider" min="60" max="200" value="120" style="width:80px;" />
+      <span id="bpmVal">120</span>
+    </label>
+  </div>
+</div>
+
+<!-- ══ GRAVITY BALLS ══ -->
+<div class="experiment" id="tab-physics">
+  <div class="exp-title">⚽ Gravity Balls</div>
+  <div class="exp-desc">Click or tap the canvas to drop balls — they bounce and interact!</div>
+  <canvas id="physicsCanvas" height="320"></canvas>
+  <div class="physics-controls">
+    <button id="clearBalls">🗑️ Clear Balls</button>
+    <label>
+      Gravity
+      <input type="range" id="gravitySlider" min="0.1" max="2" step="0.05" value="0.5" style="width:80px;" />
+    </label>
+    <label>
+      Bounce
+      <input type="range" id="bounceSlider" min="0.3" max="0.99" step="0.01" value="0.75" style="width:80px;" />
+    </label>
+  </div>
+</div>
+
+<!-- ══ WORD GENERATOR ══ -->
+<div class="experiment" id="tab-words">
+  <div class="exp-title">📝 Word Generator</div>
+  <div class="exp-desc">Pick a theme and generate a random sentence to spark a story!</div>
+  <div class="word-controls">
+    <select id="wordTheme">
+      <option value="space">🚀 Space</option>
+      <option value="ocean">🌊 Ocean</option>
+      <option value="jungle">🌴 Jungle</option>
+      <option value="robots">🤖 Robots</option>
+      <option value="magic">✨ Magic</option>
+    </select>
+    <button id="generateBtn">✨ Generate!</button>
+    <button id="copyBtn">📋 Copy</button>
+  </div>
+  <div class="word-output" id="wordOutput">Click <strong>Generate!</strong> to create a random sentence.</div>
+</div>
+
+<footer>Made with ❤️ for learning and creativity</footer>
+
+<script>
+// ══ TABS ══
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.experiment').forEach(e => e.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ══ COLOUR MIXER ══
+const rSlider = document.getElementById('rSlider');
+const gSlider = document.getElementById('gSlider');
+const bSlider = document.getElementById('bSlider');
+const colorResult = document.getElementById('colorResult');
+
+function updateColor() {
+  const r = +rSlider.value, g = +gSlider.value, b = +bSlider.value;
+  document.getElementById('rVal').textContent = r;
+  document.getElementById('gVal').textContent = g;
+  document.getElementById('bVal').textContent = b;
+  const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  colorResult.style.background = `rgb(${r},${g},${b})`;
+  colorResult.textContent = hex.toUpperCase();
+}
+[rSlider, gSlider, bSlider].forEach(s => s.addEventListener('input', updateColor));
+updateColor();
+
+// ══ RHYTHM MACHINE ══
+const cells = document.querySelectorAll('.drum-cell');
+cells.forEach(cell => cell.addEventListener('click', () => cell.classList.toggle('on')));
+
+let drumInterval = null;
+let drumBeat = 0;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(type, freq, duration) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.type = type; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+function playBeat(row) {
+  if (row === 0) playTone('sine', 60, 0.3);
+  if (row === 1) { playTone('sawtooth', 200, 0.08); playTone('sawtooth', 210, 0.08); }
+  if (row === 2) playTone('square', 800, 0.05);
+}
+
+document.getElementById('bpmSlider').addEventListener('input', function() {
+  document.getElementById('bpmVal').textContent = this.value;
+});
+
+document.getElementById('drumPlay').addEventListener('click', function() {
+  if (drumInterval) {
+    clearInterval(drumInterval); drumInterval = null;
+    this.textContent = '▶ Play';
+    document.querySelectorAll('.drum-cell').forEach(c => c.classList.remove('active-beat'));
+  } else {
+    this.textContent = '⏹ Stop';
+    drumBeat = 0;
+    drumInterval = setInterval(() => {
+      document.querySelectorAll('.drum-cell').forEach(c => c.classList.remove('active-beat'));
+      [0,1,2].forEach(row => {
+        const cell = document.querySelector(`.drum-cell[data-row="${row}"][data-col="${drumBeat}"]`);
+        if (cell) { cell.classList.add('active-beat'); if (cell.classList.contains('on')) playBeat(row); }
+      });
+      drumBeat = (drumBeat + 1) % 8;
+    }, 60000 / +document.getElementById('bpmSlider').value);
+  }
+});
+
+document.getElementById('drumClear').addEventListener('click', () => {
+  document.querySelectorAll('.drum-cell').forEach(c => c.classList.remove('on'));
+});
+
+// ══ GRAVITY BALLS ══
+const canvas2 = document.getElementById('physicsCanvas');
+const ctx2 = canvas2.getContext('2d');
+let balls = [];
+const colors = ['#ff6b6b','#ffd166','#06d6a0','#118ab2','#a29bfe','#fd79a8','#e17055'];
+
+function Ball(x, y) {
+  this.x = x; this.y = y;
+  this.r = 12 + Math.random() * 18;
+  this.vx = (Math.random() - 0.5) * 4;
+  this.vy = (Math.random() - 0.5) * 2;
+  this.color = colors[Math.floor(Math.random() * colors.length)];
+}
+
+function animateBalls() {
+  const gravity = +document.getElementById('gravitySlider').value;
+  const bounce = +document.getElementById('bounceSlider').value;
+  const W = canvas2.width, H = canvas2.height;
+  ctx2.clearRect(0, 0, W, H);
+  balls.forEach(b => {
+    b.vy += gravity;
+    b.x += b.vx; b.y += b.vy;
+    if (b.x - b.r < 0) { b.x = b.r; b.vx = Math.abs(b.vx) * bounce; }
+    if (b.x + b.r > W) { b.x = W - b.r; b.vx = -Math.abs(b.vx) * bounce; }
+    if (b.y + b.r > H) { b.y = H - b.r; b.vy = -Math.abs(b.vy) * bounce; b.vx *= 0.98; }
+    ctx2.beginPath();
+    ctx2.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx2.fillStyle = b.color;
+    ctx2.fill();
+  });
+  requestAnimationFrame(animateBalls);
+}
+
+function getCanvasPos(e) {
+  const r = canvas2.getBoundingClientRect();
+  const scaleX = canvas2.width / r.width;
+  const scaleY = canvas2.height / r.height;
+  if (e.touches) return [(e.touches[0].clientX - r.left)*scaleX, (e.touches[0].clientY - r.top)*scaleY];
+  return [(e.clientX - r.left)*scaleX, (e.clientY - r.top)*scaleY];
+}
+
+canvas2.addEventListener('click', e => {
+  const [x,y] = getCanvasPos(e);
+  if (balls.length < 60) balls.push(new Ball(x, y));
+});
+canvas2.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const [x,y] = getCanvasPos(e);
+  if (balls.length < 60) balls.push(new Ball(x, y));
+}, { passive: false });
+
+document.getElementById('clearBalls').addEventListener('click', () => balls = []);
+
+// Set canvas size based on CSS width
+function resizeCanvas() {
+  const rect = canvas2.getBoundingClientRect();
+  canvas2.width = rect.width; canvas2.height = 320;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+animateBalls();
+
+// ══ WORD GENERATOR ══
+const vocab = {
+  space: {
+    who: ['An astronaut','A space robot','A tiny alien','A brave pilot','The last human'],
+    did: ['flew toward','discovered','repaired','hid behind','orbited'],
+    what: ['a glowing moon','a broken satellite','a purple nebula','an ancient spaceship','a giant comet'],
+    end: ['and vanished into stardust.','before the solar wind arrived.','just as the stars aligned.','on the edge of the galaxy.','leaving only echoes behind.'],
+  },
+  ocean: {
+    who: ['A brave diver','A mermaid crab','A curious octopus','A lost dolphin','The sea captain'],
+    did: ['swam beneath','found','followed','escaped from','protected'],
+    what: ['a sunken treasure chest','an old shipwreck','a secret coral cave','a glowing jellyfish','the deepest trench'],
+    end: ['before the tide went out.','and was never seen again.','while seahorses watched silently.','at the edge of the abyss.','under a crescent moon.'],
+  },
+  jungle: {
+    who: ['A young explorer','A talking parrot','A nimble monkey','A giant lizard','An invisible jaguar'],
+    did: ['leapt across','discovered','climbed over','guarded','hid inside'],
+    what: ['an ancient temple','the tallest tree','a hidden waterfall','a glowing flower','a sleeping giant'],
+    end: ['while the jungle hummed.','as thunder rolled in.','and the vines closed behind.','under a canopy of stars.','before the monsoon hit.'],
+  },
+  robots: {
+    who: ['A tiny robot','The head engineer','A malfunctioning bot','Robot number 7','A rogue android'],
+    did: ['rebuilt','hacked into','accidentally launched','discovered the plans for','upgraded'],
+    what: ['the city power grid','a secret robot factory','an ancient computer','a flying car','a time machine'],
+    end: ['but forgot to save the file.','before the battery died.','which changed everything.','while sparks flew everywhere.','and rebooted with a smile.'],
+  },
+  magic: {
+    who: ['A young wizard','A talking cat','The forest witch','A clumsy apprentice','An enchanted mirror'],
+    did: ['cast a spell on','transformed','accidentally summoned','discovered the secret of','traded magic with'],
+    what: ['a sleeping giant','the entire town','a confused dragon','the moon itself','a book that writes itself'],
+    end: ['and was grounded for a week.','but forgot the counter-spell.','as stars rained down.','forever altering the prophecy.','with a puff of sparkly smoke.'],
+  },
+};
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const theme = document.getElementById('wordTheme').value;
+  const v = vocab[theme];
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const sentence = `${pick(v.who)} ${pick(v.did)} ${pick(v.what)} ${pick(v.end)}`;
+  document.getElementById('wordOutput').textContent = sentence;
+});
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = document.getElementById('wordOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 1500);
+  });
+});
+</script>
+
+</body>
+</html>
